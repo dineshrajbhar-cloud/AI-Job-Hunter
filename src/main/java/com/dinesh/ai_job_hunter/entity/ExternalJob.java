@@ -39,6 +39,9 @@ public class ExternalJob {
 
     private Instant publishedAt;
 
+    @Column(columnDefinition = "LONGTEXT")
+    private String description;
+
     public ExternalJob(
             String guid,
             String title,

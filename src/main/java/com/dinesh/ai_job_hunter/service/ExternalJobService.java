@@ -27,27 +27,40 @@ public class ExternalJobService {
 
         String guid = jobNormalizer.normalizeGuid(job);
 
-        if (externalJobRepository.existsByGuid(guid)) {
-            return false;
-        }
-
         Instant publishedAt = job.pubDate() == null
                 ? null
                 : Instant.ofEpochSecond(job.pubDate());
 
-        ExternalJob externalJob = new ExternalJob(
-                guid,
-                job.title(),
-                job.companyName(),
-                job.applicationLink(),
-                publishedAt
-        );
+        ExternalJob externalJob = externalJobRepository
+                .findByGuid(guid)
+                .orElseGet(ExternalJob::new);
+
+        boolean isNewJob = externalJob.getId() == null;
+
+        externalJob.setGuid(guid);
+        externalJob.setTitle(job.title());
+        externalJob.setCompanyName(job.companyName());
+        externalJob.setApplicationLink(job.applicationLink());
+        externalJob.setPublishedAt(publishedAt);
+        externalJob.setDescription(job.description());
 
         externalJobRepository.save(externalJob);
 
-        return true;
+        return isNewJob;
     }
+
+
     public List<ExternalJob> findAllJobs() {
         return externalJobRepository.findAll();
+    }
+
+    public List<ExternalJob> searchJobsByTitle(String title) {
+        if (title == null || title.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Job title must not be empty");
+        }
+
+        return externalJobRepository
+                .findByTitleContainingIgnoreCase(title.trim());
     }
 }
